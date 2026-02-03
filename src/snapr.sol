@@ -6,20 +6,10 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 interface IAavePool {
-    function deposit(
-        address asset,
-        uint256 amount,
-        address onBehalfOf,
-        uint16 referralCode
-    ) external;
+    function deposit(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
 
-    function borrow(
-        address asset,
-        uint256 amount,
-        uint256 interestRateMode,
-        uint16 referralCode,
-        address onBehalfOf
-    ) external;
+    function borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf)
+        external;
 }
 
 interface IPermit2 {
@@ -90,10 +80,7 @@ contract Snapr is ReentrancyGuard {
         // Pull tokens once
         permit2.permitTransferFrom(
             permit,
-            IPermit2.SignatureTransferDetails({
-                to: address(this),
-                requestedAmount: permit.permitted.amount
-            }),
+            IPermit2.SignatureTransferDetails({to: address(this), requestedAmount: permit.permitted.amount}),
             msg.sender,
             signature
         );
@@ -119,58 +106,33 @@ contract Snapr is ReentrancyGuard {
 
     // data = abi.encode(asset, amount)
     function _handleAaveDeposit(bytes calldata data) internal {
-        (address asset, uint256 amount) =
-            abi.decode(data, (address, uint256));
+        (address asset, uint256 amount) = abi.decode(data, (address, uint256));
 
         IERC20(asset).forceApprove(address(aavePool), amount);
 
-        aavePool.deposit(
-            asset,
-            amount,
-            msg.sender,
-            0
-        );
+        aavePool.deposit(asset, amount, msg.sender, 0);
     }
 
     // data = abi.encode(asset, amount, interestRateMode)
     function _handleAaveBorrow(bytes calldata data) internal {
-        (
-            address asset,
-            uint256 amount,
-            uint256 interestRateMode
-        ) = abi.decode(data, (address, uint256, uint256));
+        (address asset, uint256 amount, uint256 interestRateMode) = abi.decode(data, (address, uint256, uint256));
 
-        aavePool.borrow(
-            asset,
-            amount,
-            interestRateMode,
-            0,
-            msg.sender
-        );
+        aavePool.borrow(asset, amount, interestRateMode, 0, msg.sender);
     }
 
     /*//////////////////////////////////////////////////////////////
                         ACTION BUILDERS
     //////////////////////////////////////////////////////////////*/
 
-    function buildDepositAction(
-        address asset,
-        uint256 amount
-    ) external pure returns (Action memory) {
-        return Action({
-            actionType: ActionType.AAVE_DEPOSIT,
-            data: abi.encode(asset, amount)
-        });
+    function buildDepositAction(address asset, uint256 amount) external pure returns (Action memory) {
+        return Action({actionType: ActionType.AAVE_DEPOSIT, data: abi.encode(asset, amount)});
     }
 
-    function buildBorrowAction(
-        address asset,
-        uint256 amount,
-        uint256 interestRateMode
-    ) external pure returns (Action memory) {
-        return Action({
-            actionType: ActionType.AAVE_BORROW,
-            data: abi.encode(asset, amount, interestRateMode)
-        });
+    function buildBorrowAction(address asset, uint256 amount, uint256 interestRateMode)
+        external
+        pure
+        returns (Action memory)
+    {
+        return Action({actionType: ActionType.AAVE_BORROW, data: abi.encode(asset, amount, interestRateMode)});
     }
 }
