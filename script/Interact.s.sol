@@ -16,10 +16,7 @@ contract InteractSnapr is Script {
         }
 
         Snapr.Action[] memory actions = new Snapr.Action[](1);
-        actions[0] = snapr.buildDepositAction(
-            vm.envAddress("USDC_ADDRESS"),
-            1000000
-        );
+        actions[0] = snapr.buildDepositAction(vm.envAddress("USDC_ADDRESS"), 1000000);
 
         snapr.execute(actions);
 

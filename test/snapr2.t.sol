@@ -6,17 +6,11 @@ import "../src/snapr.sol";
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+address constant AAVE_POOL_BASE_SEPOLIA = 0x8bAB6d1b75f19e9eD9fCe8b9BD338844fF79aE27;
 
-address constant AAVE_POOL_BASE_SEPOLIA =
-    0x8bAB6d1b75f19e9eD9fCe8b9BD338844fF79aE27;
+address constant PERMIT2 = 0x000000000022D473030F116dDEE9F6B43aC78BA3;
 
-
-address constant PERMIT2 =
-    0x000000000022D473030F116dDEE9F6B43aC78BA3;
-
-
-address constant USDC =
-    0xba50Cd2A20f6DA35D788639E581bca8d0B5d4D5f;
+address constant USDC = 0xba50Cd2A20f6DA35D788639E581bca8d0B5d4D5f;
 
 contract SnaprAaveIntegrationTest is Test {
     Snapr snapr;
@@ -74,10 +68,7 @@ contract SnaprAaveIntegrationTest is Test {
         actions[0] = snapr.buildDepositAction(USDC, amount);
 
         IPermit2.PermitTransferFrom memory permit = IPermit2.PermitTransferFrom({
-            permitted: IPermit2.TokenPermissions({
-                token: USDC,
-                amount: amount
-            }),
+            permitted: IPermit2.TokenPermissions({token: USDC, amount: amount}),
             nonce: 0,
             deadline: block.timestamp + 1 hours
         });
@@ -95,17 +86,12 @@ contract SnaprAaveIntegrationTest is Test {
                         PERMIT2 SIGNING
     //////////////////////////////////////////////////////////////*/
 
-    function _signPermit(
-        IPermit2.PermitTransferFrom memory permit,
-        uint256 pk
-    ) internal view returns (bytes memory) {
+    function _signPermit(IPermit2.PermitTransferFrom memory permit, uint256 pk) internal view returns (bytes memory) {
         bytes32 domainSeparator = IPermit2(PERMIT2).DOMAIN_SEPARATOR();
 
         bytes32 tokenPermissionsHash = keccak256(
             abi.encode(
-                keccak256(
-                    "TokenPermissions(address token,uint256 amount)"
-                ),
+                keccak256("TokenPermissions(address token,uint256 amount)"),
                 permit.permitted.token,
                 permit.permitted.amount
             )
@@ -124,8 +110,7 @@ contract SnaprAaveIntegrationTest is Test {
             )
         );
 
-        bytes32 digest =
-            keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
         return abi.encodePacked(r, s, v);
